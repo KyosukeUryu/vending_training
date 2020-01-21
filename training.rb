@@ -17,31 +17,33 @@
 
 # 作成した自動販売機に入れたお金を返してもらう
 # vm.return_money
-class ChooseFromList
-  def self.choice(machine)
-    self.juice_list(machine)
+class User
+
+  def initialize(name: 'taro')
+    @name = name
+  end
+
+  def choice(machine)
+    juice_list(machine)
     puts "投入金額:#{machine.current_slot_money}円"
     for i in 0..2 do
       puts "#{i}: #{machine.juice.name[i]}:#{machine.juice.price[i]}円"
     end
     puts "3: やっぱり買わない"
-    puts
     puts "数字を入力してください"
 
     choice_number = gets.chomp
 
     if choice_number != "0" && choice_number != "1" && choice_number != "2" && choice_number != "3"
-      puts
       puts "0~3のみで入力してください。"
-      puts
-      return self.choice
+      return choice(machine)
     end
-    choice_number.to_i
+    choice_number = choice_number.to_i
+    machine.buy_juice(choice_number, self)
   end
 
-  def self.juice_list(machine)
+  def juice_list(machine)
     puts "投入金額と在庫から買えるのは以下の飲み物です"
-    puts
     for i in 0..2 do
       if machine.current_slot_money >= machine.juice.price[i] && machine.juice.number[i] >= 1
         puts "#{machine.juice.name[i]}"
@@ -88,8 +90,8 @@ class VendingMachine
     @slot_money = 0
   end
 
-  def buy_juice(machine)
-    @choice_juice = ChooseFromList.choice(machine)
+  def buy_juice(choice_juice, user)
+    @choice_juice = choice_juice
     if @choice_juice == 3
       return puts "買わないんかい"
     elsif @slot_money >= @juice.price[@choice_juice] && @juice.number[@choice_juice] >= 1
@@ -99,10 +101,10 @@ class VendingMachine
       return_money
     elsif @juice.number[@choice_juice] == 0
       puts '売り切れです'
-      buy_juice(machine)
+      user.choice(self)
     else
       puts "お金が足りません"
-      self.buy_juice(machine)
+      user.choice(self)
     end
   end
 
@@ -124,8 +126,9 @@ class Juice
 end
 
 vend = VendingMachine.new
+user = User.new
 6.times do
   vend.slot_money(100)
   vend.slot_money(50)
-  vend.buy_juice(vend)
+  choice_juice = user.choice(vend)
 end
