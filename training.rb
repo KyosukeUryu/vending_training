@@ -17,35 +17,42 @@
 
 # 作成した自動販売機に入れたお金を返してもらう
 # vm.return_money
-class ChooseFromList
-  def self.choice(machine)
-    self.juice_list(machine)
-    puts "投入金額:#{machine.current_slot_money}円"
-    for i in 0..2 do
-      puts "#{i}: #{machine.juice.name[i]}:#{machine.juice.price[i]}円"
-    end
-    puts "3: やっぱり買わない"
-    puts
-    puts "数字を入力してください"
+class User
 
-    choice_number = gets.chomp
+  CHOICE_JUICE = ["コーラ", "レッドブル", "水", "キャンセル"].freeze
 
-    if choice_number != "0" && choice_number != "1" && choice_number != "2" && choice_number != "3"
-      puts
-      puts "0~3のみで入力してください。"
-      puts
-      return self.choice
-    end
-    choice_number.to_i
+  def initialize(name: 'taro')
+    @name = name
   end
 
-  def self.juice_list(machine)
+  def juice_list(machine)
     puts "投入金額と在庫から買えるのは以下の飲み物です"
-    puts
     for i in 0..2 do
-      if machine.current_slot_money >= machine.juice.price[i] && machine.juice.number[i] >= 1
-        puts "#{machine.juice.name[i]}"
+      if machine.current_slot_money >= machine.juice.price[i] && machine.juice.stock[i] >= 1
+        puts "#{machine.juice.juice_name[i]}"
       end
+    end
+  end
+
+  def choice(machine)
+    juice_list(machine)
+    puts "投入金額:#{machine.current_slot_money}円"
+    for i in 0..2 do
+      puts "#{i}: #{machine.juice.juice_name[i]}:#{machine.juice.price[i]}円"
+    end
+    puts "3: キャンセル"
+    puts "数字を入力してください"
+
+    choice_number = Integer(gets.chomp) rescue nil
+
+    if choice_number == nil || CHOICE_JUICE[choice_number].nil?
+      puts "0~3のみで入力してください。"
+      choice(machine)
+    elsif CHOICE_JUICE[choice_number] == "キャンセル"
+      puts "キャンセルしました"
+      machine.return_money
+    else
+      machine.buy_juice(choice_number, self)
     end
   end
 end
@@ -55,7 +62,7 @@ class VendingMachine
   # ステップ１　扱えないお金の例コード
   # 10円玉、50円玉、100円玉、500円玉、1000円札を１つずつ投入できる。
   MONEY = [10, 50, 100, 500, 1000].freeze
-  attr_accessor :juice, :sale
+  attr_reader :juice, :sale
   # （自動販売機に投入された金額をインスタンス変数の @slot_money に代入する）
   def initialize
     # 最初の自動販売機に入っている金額は0円
@@ -83,49 +90,73 @@ class VendingMachine
   # 払い戻し操作を行うと、投入金額の総計を釣り銭として出力する。
   def return_money
     # 返すお金の金額を表示する
-    puts @slot_money
+    puts "#{@slot_money}のお釣りです"
     # 自動販売機に入っているお金を0円に戻す
     @slot_money = 0
   end
 
-  def buy_juice(machine)
-    @choice_juice = ChooseFromList.choice(machine)
-    if @choice_juice == 3
-      return puts "買わないんかい"
-    elsif @slot_money >= @juice.price[@choice_juice] && @juice.number[@choice_juice] >= 1
-      puts "#{@juice.name[@choice_juice]}が出てきた。"
-      @juice.number[@choice_juice] -= 1
-      total_sale(@choice_juice)
+  def buy_juice(choice_juice, user)
+    @user_select = @juice.select_juice[choice_juice]
+    if @user_select == nil
+      return puts "キャンセルしました"
+    elsif @slot_money >= @user_select[:price] && @user_select[:stock] >= 1
+      puts "#{@user_select[:name]}が出てきた"
+      @user_select[:stock] -= 1
+      total_sale(choice_juice)
       return_money
-    elsif @juice.number[@choice_juice] == 0
+    elsif @user_select[:stock] == 0
       puts '売り切れです'
-      buy_juice(machine)
+      user.choice(self)
     else
       puts "お金が足りません"
-      self.buy_juice(machine)
+      user.choice(self)
     end
+    # if @user_select == nil
+    #   return puts "キャンセルしました"
+    # elsif @slot_money >= @juice.price[choice_juice] && @juice.stock[choice_juice] >= 1
+    #   puts "#{@juice.juice_name[choice_juice]}が出てきた"
+    #   @juice.stock[choice_juice] -= 1
+    #   total_sale(choice_juice)
+    #   return_money
+    # elsif @juice.stock[choice_juice] == 0
+    #   puts '売り切れです'
+    #   user.choice(self)
+    # else
+    #   puts "お金が足りません"
+    #   user.choice(self)
+    # end
   end
 
   def total_sale(choice_juice)
-    @slot_money -= @juice.price[@choice_juice]
-    @sale += @juice.price[@choice_juice]
+    @slot_money -= @user_select[:price]
+    @sale += @user_select[:price]
   end
-
+  # def total_sale(choice_juice)
+  #   @slot_money -= @juice.price[choice_juice]
+  #   @sale += @juice.price[choice_juice]
+  # end
 end
 
 class Juice
-  attr_accessor :name, :price, :number
+  attr_reader :juice_name, :price, :stock
   def initialize
-    @name = ["コーラ", "レッドブル", "水"]
+    @juice_name = ["コーラ", "レッドブル", "水"]
     @price = [120,200,100]
-    @number = [5,5,5]
+    @stock = [5,5,5]
   end
 
+  def select_juice
+    juice_info = [{name: "コーラ", price: 120, stock: 5},
+                  {name: "レッドブル", price: 200, stock: 5},
+                  {name: "水", price: 100, stock: 5}
+                 ]
+  end
 end
 
-vend = VendingMachine.new
+machine = VendingMachine.new
+user = User.new
 6.times do
-  vend.slot_money(100)
-  vend.slot_money(50)
-  vend.buy_juice(vend)
+  machine.slot_money(100)
+  machine.slot_money(50)
+  choice_juice = user.choice(machine)
 end
