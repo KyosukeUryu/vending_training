@@ -18,6 +18,7 @@
 # 作成した自動販売機に入れたお金を返してもらう
 # vm.return_money
 class User
+  CHOICE_JUICE = ["コーラ", "レッドブル", "水", "キャンセル"]
 
   def initialize(name: 'taro')
     @name = name
@@ -29,17 +30,20 @@ class User
     for i in 0..2 do
       puts "#{i}: #{machine.juice.name[i]}:#{machine.juice.price[i]}円"
     end
-    puts "3: やっぱり買わない"
+    puts "3: キャンセル"
     puts "数字を入力してください"
 
-    choice_number = gets.chomp
+    choice_number = Integer(gets.chomp) rescue nil
 
-    if choice_number != "0" && choice_number != "1" && choice_number != "2" && choice_number != "3"
+    if choice_number == nil || CHOICE_JUICE[choice_number].nil?
       puts "0~3のみで入力してください。"
-      return choice(machine)
+      choice(machine)
+    elsif CHOICE_JUICE[choice_number] == "キャンセル"
+      puts "キャンセルしました"
+      machine.return_money
+    else
+      machine.buy_juice(choice_number, self)
     end
-    choice_number = choice_number.to_i
-    machine.buy_juice(choice_number, self)
   end
 
   def juice_list(machine)
@@ -85,21 +89,18 @@ class VendingMachine
   # 払い戻し操作を行うと、投入金額の総計を釣り銭として出力する。
   def return_money
     # 返すお金の金額を表示する
-    puts @slot_money
+    puts "#{@slot_money}のお釣りです"
     # 自動販売機に入っているお金を0円に戻す
     @slot_money = 0
   end
 
   def buy_juice(choice_juice, user)
-    @choice_juice = choice_juice
-    if @choice_juice == 3
-      return puts "買わないんかい"
-    elsif @slot_money >= @juice.price[@choice_juice] && @juice.number[@choice_juice] >= 1
-      puts "#{@juice.name[@choice_juice]}が出てきた。"
-      @juice.number[@choice_juice] -= 1
-      total_sale(@choice_juice)
+    if @slot_money >= @juice.price[choice_juice] && @juice.number[choice_juice] >= 1
+      puts "#{@juice.name[choice_juice]}が出てきた。"
+      @juice.number[choice_juice] -= 1
+      total_sale(choice_juice)
       return_money
-    elsif @juice.number[@choice_juice] == 0
+    elsif @juice.number[choice_juice] == 0
       puts '売り切れです'
       user.choice(self)
     else
@@ -109,8 +110,8 @@ class VendingMachine
   end
 
   def total_sale(choice_juice)
-    @slot_money -= @juice.price[@choice_juice]
-    @sale += @juice.price[@choice_juice]
+    @slot_money -= @juice.price[choice_juice]
+    @sale += @juice.price[choice_juice]
   end
 
 end
