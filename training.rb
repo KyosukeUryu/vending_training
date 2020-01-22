@@ -28,7 +28,7 @@ class User
   def juice_list(machine)
     puts "投入金額と在庫から買えるのは以下の飲み物です"
     for i in 0..2 do
-      if machine.current_slot_money >= JUICE_PRICE[i] && !!machine.stock.find { |n| n.juice_name == CHOICE_JUICE[i]}
+      if machine.current_slot_money >= JUICE_PRICE[i] && !machine.stock[CHOICE_JUICE[i]].empty?
         puts "#{CHOICE_JUICE[i]}"
       end
     end
@@ -52,7 +52,7 @@ class User
       puts "キャンセルしました"
       machine.return_money
     else
-      machine.buy_juice(CHOICE_JUICE[choice_number], self)
+      machine.buy_juice(choice_number, self)
     end
   end
 end
@@ -69,7 +69,7 @@ class VendingMachine
     # 最初の自動販売機に入っている金額は0円
     @slot_money = 0
     @sale = 0
-    @stock = []
+    @stock = {}
   end
 
   # 投入金額の総計を取得できる。
@@ -79,10 +79,14 @@ class VendingMachine
   end
 
   #初期に5個ずつ投入
-  def stock_five_juice
+  def stock_juice(name, price)
     5.times do
-      juices = Juice.create_each_juice
-      self.stock.push(*juices)
+      juice = Juice.new(name, price)
+      if stock[juice.juice_name].nil?
+        stock[juice.juice_name] = [juice]
+      else
+        stock[juice.juice_name].push(juice)
+      end
     end
   end
 
@@ -104,18 +108,17 @@ class VendingMachine
     @slot_money = 0
   end
 
-  def buy_juice(choice_juice, user)
-    if @stock.find { |n| n.juice_name == choice_juice }.nil?
+  def buy_juice(choice_number, user)
+    if @stock[User::CHOICE_JUICE[choice_number]].empty?
       puts '売り切れです'
       user.choice(self)
-    elsif @stock.find { |n| n.juice_name == choice_juice }.price > @slot_money
+    elsif User::JUICE_PRICE[choice_number] > @slot_money
       puts "お金が足りません"
       user.choice(self)
     else
-      puts "#{choice_juice}が出てきた"
-      @stock.select { |n| n.juice_name == choice_juice }.slice!(0, 1)
-      binding.irb
-      total_sale(choice_juice)
+      puts "#{User::CHOICE_JUICE[choice_number]}が出てきた"
+      @stock[User::CHOICE_JUICE[choice_number]].shift
+      total_sale(choice_number)
       return_money
     end
     #if @slot_money >= @user_select[:price] && @user_select[:stock] >= 1
@@ -146,9 +149,9 @@ class VendingMachine
     # end
   end
 
-  def total_sale(choice_juice)
-    @slot_money -= @stock.find { |n| n.juice_name == choice_juice }.price
-    @sale += @stock.find { |n| n.juice_name == choice_juice }.price
+  def total_sale(choice_number)
+    @slot_money -= User::JUICE_PRICE[choice_number]
+    @sale += User::JUICE_PRICE[choice_number]
   end
   # def total_sale(choice_juice)
   #   @slot_money -= @juice.price[choice_juice]
@@ -179,7 +182,10 @@ class Juice
 end
 
 machine = VendingMachine.new
-machine.stock_five_juice
+machine.stock_juice('コーラ', 120)
+machine.stock_juice('レッドブル', 200)
+machine.stock_juice('水', 100)
+
 user = User.new
 6.times do
   machine.slot_money(100)
