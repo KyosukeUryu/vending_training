@@ -1,3 +1,5 @@
+require './lib/User'
+require './lib/Juice'
 # このコードをコピペしてrubyファイルに貼り付け、そのファイルをirbでrequireして実行しましょう。
 
 # 例
@@ -17,45 +19,6 @@
 
 # 作成した自動販売機に入れたお金を返してもらう
 # vm.return_money
-class User
-  CHOICE_JUICE = ["コーラ", "レッドブル", "水", "キャンセル"].freeze
-  JUICE_PRICE = [120, 200, 100]
-
-  def initialize(name: 'taro')
-    @name = name
-  end
-
-  def juice_list(machine)
-    puts "投入金額と在庫から買えるのは以下の飲み物です"
-    for i in 0..2 do
-      if machine.current_slot_money >= JUICE_PRICE[i] && !machine.stock[CHOICE_JUICE[i]].empty?
-        puts "#{CHOICE_JUICE[i]}"
-      end
-    end
-  end
-
-  def choice(machine)
-    juice_list(machine)
-    puts "投入金額:#{machine.current_slot_money}円"
-    for i in 0..2 do
-      puts "#{i}: #{CHOICE_JUICE[i]}:#{JUICE_PRICE[i]}円"
-    end
-    puts "3: キャンセル"
-    puts "数字を入力してください"
-
-    choice_number = Integer(gets.chomp) rescue nil
-
-    if choice_number == nil || CHOICE_JUICE[choice_number].nil?
-      puts "0~3のみで入力してください。"
-      choice(machine)
-    elsif CHOICE_JUICE[choice_number] == "キャンセル"
-      puts "キャンセルしました"
-      machine.return_money
-    else
-      machine.buy_juice(choice_number, self)
-    end
-  end
-end
 
 class VendingMachine
   # ステップ０　お金の投入と払い戻しの例コード
@@ -79,14 +42,25 @@ class VendingMachine
   end
 
   #初期に5個ずつ投入
-  def stock_juice(name, price)
+  def stock_first_juice
     5.times do
-      juice = Juice.new(name, price)
-      if stock[juice.juice_name].nil?
-        stock[juice.juice_name] = [juice]
-      else
-        stock[juice.juice_name].push(juice)
+      juices = Juice.create_each_juice
+      juices.each do |juice|
+        if @stock[juice.juice_name].nil?
+          @stock[juice.juice_name] = [juice]
+        else
+          @stock[juice.juice_name].push(juice)
+        end
       end
+    end
+  end
+
+  def stock_juice(juice_name, price)
+    juice = Juice.new(juice_name, price)
+    if stock[juice.juice_name].nil?
+      stock[juice.juice_name] = [juice]
+    else
+      stock[juice.juice_name].push(juice)
     end
   end
 
@@ -108,6 +82,7 @@ class VendingMachine
     @slot_money = 0
   end
 
+  #userが選んだジュースの購入処理
   def buy_juice(choice_number, user)
     if @stock[User::CHOICE_JUICE[choice_number]].empty?
       puts '売り切れです'
@@ -149,6 +124,7 @@ class VendingMachine
     # end
   end
 
+  #購入後の返金額、売上額算定用
   def total_sale(choice_number)
     @slot_money -= User::JUICE_PRICE[choice_number]
     @sale += User::JUICE_PRICE[choice_number]
@@ -159,36 +135,11 @@ class VendingMachine
   # end
 end
 
-class Juice
-  attr_reader :juice_name, :price
-  def initialize(juice_name, price)
-    @juice_name = juice_name
-    @price = price
-  end
-
-  def self.create_each_juice
-    juice_list = [['コーラ', 120], ['レッドブル', 200], ['水', 100]]
-    juice_list.map do |juice|
-      self.new(*juice)
-    end
-  end
-
-  def select_juice
-    juice_info = [{name: "コーラ", price: 120, stock: 5},
-                  {name: "レッドブル", price: 200, stock: 5},
-                  {name: "水", price: 100, stock: 5}
-                 ]
-  end
-end
 
 machine = VendingMachine.new
-machine.stock_juice('コーラ', 120)
-machine.stock_juice('レッドブル', 200)
-machine.stock_juice('水', 100)
-
-user = User.new
-6.times do
-  machine.slot_money(100)
-  machine.slot_money(50)
-  choice_juice = user.choice(machine)
-end
+#user = User.new
+#6.times do
+#  machine.slot_money(100)
+#  machine.slot_money(50)
+#  choice_juice = user.choice(machine)
+#end
