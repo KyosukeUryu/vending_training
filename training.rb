@@ -18,8 +18,8 @@
 # 作成した自動販売機に入れたお金を返してもらう
 # vm.return_money
 class User
-
   CHOICE_JUICE = ["コーラ", "レッドブル", "水", "キャンセル"].freeze
+
 
   def initialize(name: 'taro')
     @name = name
@@ -152,6 +152,7 @@ class Juice
                  ]
   end
 end
+
 
 machine = VendingMachine.new
 user = User.new
