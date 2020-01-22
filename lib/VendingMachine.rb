@@ -59,6 +59,8 @@ class VendingMachine
     juice = Juice.new(juice_name, price)
     if stock[juice.juice_name].nil?
       stock[juice.juice_name] = [juice]
+      User::CHOICE_JUICE.insert(-2, juice_name)
+      User::JUICE_PRICE.push(price)
     else
       stock[juice.juice_name].push(juice)
     end
