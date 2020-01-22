@@ -48,6 +48,9 @@ class VendingMachine
       juices.each do |juice|
         if @stock[juice.juice_name].nil?
           @stock[juice.juice_name] = [juice]
+          # 定数に追加してジュースが増えても対応する
+          User::CHOICE_JUICE.insert(-2, juice.juice_name)
+          User::JUICE_PRICE.push(juice.price)
         else
           @stock[juice.juice_name].push(juice)
         end
