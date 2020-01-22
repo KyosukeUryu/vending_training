@@ -7,6 +7,14 @@ class User
     @name = name
   end
 
+  def slot_money(money, machine)
+    # 想定外のもの（１円玉や５円玉。千円札以外のお札、そもそもお金じゃないもの（数字以外のもの）など）
+    # が投入された場合は、投入金額に加算せず、それをそのまま釣り銭としてユーザに出力する。
+    return false unless VendingMachine::MONEY.include?(money)
+    # 自動販売機にお金を入れる
+    machine.fund_money(money)
+  end
+
   def juice_list(machine)
     puts "投入金額と在庫から買えるのは以下の飲み物です"
     #ストックの数だけforで表示する
