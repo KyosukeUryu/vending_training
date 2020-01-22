@@ -63,18 +63,26 @@ class VendingMachine
   # 10円玉、50円玉、100円玉、500円玉、1000円札を１つずつ投入できる。
   MONEY = [10, 50, 100, 500, 1000].freeze
   attr_reader :juice, :sale
+  attr_accessor :stock
   # （自動販売機に投入された金額をインスタンス変数の @slot_money に代入する）
   def initialize
     # 最初の自動販売機に入っている金額は0円
     @slot_money = 0
-    @juice = Juice.new
     @sale = 0
+    @stock = []
   end
 
   # 投入金額の総計を取得できる。
   def current_slot_money
     # 自動販売機に入っているお金を表示する
     @slot_money
+  end
+
+  #初期に5個ずつ投入
+  def stock_five_juice
+    5.times do
+      self.stock << Juice.create_each_juice
+    end
   end
 
   # 10円玉、50円玉、100円玉、500円玉、1000円札を１つずつ投入できる。
@@ -138,11 +146,17 @@ class VendingMachine
 end
 
 class Juice
-  attr_reader :juice_name, :price, :stock
-  def initialize
-    @juice_name = ["コーラ", "レッドブル", "水"]
-    @price = [120,200,100]
-    @stock = [5,5,5]
+  attr_reader :juice_name, :price
+  def initialize(juice_name, price)
+    @juice_name = juice_name
+    @price = price
+  end
+
+  def self.create_each_juice
+    juice_list = [['コーラ', 120], ['レッドブル', 200], ['水', 100]]
+    juice_list.map do |juice|
+      self.new(*juice)
+    end
   end
 
   def select_juice
@@ -154,9 +168,13 @@ class Juice
 end
 
 machine = VendingMachine.new
-user = User.new
-6.times do
-  machine.slot_money(100)
-  machine.slot_money(50)
-  choice_juice = user.choice(machine)
-end
+machine.stock_five_juice
+puts machine.stock
+
+#user = User.new
+#6.times do
+#  machine.slot_money(100)
+#  machine.slot_money(50)
+#  choice_juice = user.choice(machine)
+#  binding.irb
+#end
