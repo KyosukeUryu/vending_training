@@ -21,6 +21,7 @@ class User
     for i in 0..machine.stock.count - 1 do
       if machine.current_slot_money >= JUICE_PRICE[i] && !machine.stock[CHOICE_JUICE[i]].empty?
         puts "#{CHOICE_JUICE[i]}"
+        puts
       end
     end
   end
@@ -31,6 +32,7 @@ class User
     # 定数から繰り返し回数を判定
     for i in 0..machine.stock.count - 1 do
       puts "#{i}: #{CHOICE_JUICE[i]}:#{JUICE_PRICE[i]}円"
+      puts
     end
     puts "#{CHOICE_JUICE.index("キャンセル")}: キャンセル"
     puts "数字を入力してください"
