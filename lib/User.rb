@@ -1,8 +1,4 @@
 class User
-  # VendingMachineクラスで追加されたジュースの名前と価格が入る
-  CHOICE_JUICE = ["キャンセル"]
-  JUICE_PRICE = []
-
   def initialize(name: 'taro')
     @name = name
   end
@@ -19,8 +15,8 @@ class User
     puts "投入金額と在庫から買えるのは以下の飲み物です"
     # ストックの数だけforで表示する
     for i in 0..machine.stock.count - 1 do
-      if machine.current_slot_money >= JUICE_PRICE[i] && !machine.stock[CHOICE_JUICE[i]].empty?
-        puts "#{CHOICE_JUICE[i]}"
+      if machine.current_slot_money >= machine.juice_price_list[i] && !machine.stock[machine.juice_name_list[i]].empty?
+        puts "#{machine.juice_name_list[i]}"
         puts
       end
     end
@@ -31,19 +27,19 @@ class User
     puts "投入金額:#{machine.current_slot_money}円"
     # 定数から繰り返し回数を判定
     for i in 0..machine.stock.count - 1 do
-      puts "#{i}: #{CHOICE_JUICE[i]}:#{JUICE_PRICE[i]}円"
+      puts "#{i}: #{machine.juice_name_list[i]}:#{machine.juice_price_list[i]}円"
       puts
     end
-    puts "#{CHOICE_JUICE.index("キャンセル")}: キャンセル"
+    puts "#{machine.juice_name_list.index("キャンセル")}: キャンセル"
     puts "数字を入力してください"
 
     choice_number = Integer(gets.chomp) rescue nil
 
     # 不正な入力判定
-    if choice_number == nil || CHOICE_JUICE[choice_number].nil?
-      puts "0~#{CHOICE_JUICE.count - 1}のみで入力してください。"
+    if choice_number == nil || machine.juice_name_list[choice_number].nil?
+      puts "0~#{machine.juice_name_list.count - 1}のみで入力してください。"
       choice(machine)
-    elsif CHOICE_JUICE[choice_number] == "キャンセル"
+    elsif machine.juice_name_list[choice_number] == "キャンセル"
       puts "キャンセルしました"
       machine.return_money
     else
